@@ -14,21 +14,32 @@ jobs:
       contents: write
 
     steps:
+      # Step 1: Checkout latest repository code
       - name: checkout repo content
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures the latest commit is used
 
+      # Step 2: Setup Python environment
       - name: setup python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
 
+      # Step 3: Install dependencies
       - name: install python packages
         run: |
           cd notebooks/ch03
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Step 4: Debug notebook directory (optional)
+      - name: Debug directory structure
+        run: |
+          ls -R notebooks/ch03
+
+      # Step 5: Execute workflows
       - name: execute python workflows from bash script
         env:
           HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
@@ -37,6 +48,7 @@ jobs:
           jupyter nbconvert --to notebook --execute 2_air_quality_feature_pipeline.ipynb
           jupyter nbconvert --to notebook --execute 4_air_quality_batch_inference.ipynb
 
+      # Step 6: Publish updates to GitHub Pages
       - name: github pages publish
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
