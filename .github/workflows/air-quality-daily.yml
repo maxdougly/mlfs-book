@@ -14,22 +14,33 @@ jobs:
       contents: write
 
     steps:
-      - name: checkout repo content
+      # Step 1: Checkout the repository content
+      - name: Checkout repo content
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures the latest commit is fetched
 
-      - name: setup python
+      # Step 2: Setup Python environment
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
           cache: 'pip'
 
-      - name: install python packages
+      # Step 3: Install dependencies
+      - name: Install Python packages
         run: |
           cd notebooks/ch03
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: execute python workflows from bash script
+      # Step 4: Debug notebook directory (optional for verification)
+      - name: Debug directory structure
+        run: |
+          ls -R notebooks/ch03
+
+      # Step 5: Execute Python workflows
+      - name: Execute Python workflows from bash script
         env:
           HOPSWORKS_API_KEY: ${{ secrets.HOPSWORKS_API_KEY }}
         run: |
@@ -37,14 +48,23 @@ jobs:
           jupyter nbconvert --to notebook --execute 2_air_quality_feature_pipeline.ipynb
           jupyter nbconvert --to notebook --execute 4_air_quality_batch_inference.ipynb
 
-      - name: github pages publish
+      # Step 6: Add untracked files
+      - name: Add untracked files
+        run: |
+          git add notebooks/ch03/*.nbconvert.ipynb
+
+      # Step 7: Publish updates to GitHub Pages
+      - name: Publish updates
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Air Quality Dashboard published"
           commit_options: '--no-verify --signoff'
-          file_pattern: 'docs/air-quality/assets/img/* docs/_includes/*'
+          file_pattern: |
+            notebooks/ch03/*.nbconvert.ipynb
+            docs/air-quality/assets/img/*
+            docs/_includes/*
           repository: .
-          status_options: '--untracked-files=no'
+          status_options: '--untracked-files=all'
           skip_dirty_check: true
           skip_fetch: true
           skip_checkout: true
